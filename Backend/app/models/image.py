@@ -131,6 +131,13 @@ class Image(Base):
         doc="All analysis comparisons using this image"
     )
 
+    classifications = relationship(
+        "Classification",
+        back_populates="image",
+        cascade="all, delete-orphan",
+        doc="All organ classifications for this image"
+    )
+
     # ========================================================================
     # Methods
     # ========================================================================

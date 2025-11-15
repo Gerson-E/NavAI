@@ -28,6 +28,22 @@ class ComparisonResult(TypedDict):
     confidence: float
 
 
+class ClassificationResult(TypedDict):
+    """
+    Result of classifying what organ/anatomy is shown in an ultrasound image.
+
+    Fields:
+        detected_organ: The identified organ or anatomy in the image
+        confidence: Confidence score of the classification (0.0 to 1.0)
+        is_kidney: Boolean flag indicating if the image shows a kidney
+        message: Human-readable message about the detection
+    """
+    detected_organ: str
+    confidence: float
+    is_kidney: bool
+    message: str
+
+
 def compare_to_reference(current_img_path: str, ref_id: str) -> ComparisonResult:
     """
     Compare a current ultrasound image to a reference view.
@@ -51,5 +67,36 @@ def compare_to_reference(current_img_path: str, ref_id: str) -> ComparisonResult
         'good'
         >>> print(result["ssim"])
         0.82
+    """
+    raise NotImplementedError("This function must be implemented by Person B")
+
+
+def classify_organ(img_path: str) -> ClassificationResult:
+    """
+    Classify what organ or anatomy is shown in an ultrasound image.
+
+    This is the MVP feature for kidney detection. The function analyzes an
+    ultrasound image and determines what organ is visible, with special focus
+    on kidney detection.
+
+    Args:
+        img_path: Absolute path to the ultrasound image file
+
+    Returns:
+        ClassificationResult dictionary with detected organ and confidence
+
+    Raises:
+        FileNotFoundError: If img_path does not exist
+        ValueError: If image is invalid/corrupted
+        RuntimeError: If classification fails due to processing error
+
+    Example:
+        >>> result = classify_organ("/path/to/scan.png")
+        >>> print(result["detected_organ"])
+        'kidney'
+        >>> print(result["is_kidney"])
+        True
+        >>> print(result["confidence"])
+        0.92
     """
     raise NotImplementedError("This function must be implemented by Person B")

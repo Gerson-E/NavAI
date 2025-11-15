@@ -19,16 +19,19 @@ from sqlalchemy.orm import Session as DBSession
 
 from app.core.database import get_db
 from app.core.storage import get_image_path
-from app.models import Session, Image, Comparison, ReferenceView
+from app.models import Session, Image, Comparison, ReferenceView, Classification
 from app.schemas import (
     ComparisonRequest,
     ComparisonResponse,
     ComparisonListResponse,
     AnalysisResultFromEngine,
+    ClassificationRequest,
+    ClassificationResponse,
+    ClassificationResultFromEngine,
 )
 
 # Import Person B's analysis engine
-from app.analysis.engine import compare_to_reference
+from app.analysis.engine import compare_to_reference, classify_organ
 
 
 router = APIRouter()
@@ -362,4 +365,154 @@ def get_comparison(
         confidence=comparison.confidence,
         processing_time_ms=comparison.processing_time_ms,
         created_at=comparison.created_at
+    )
+
+
+# ============================================================================
+# Classify Organ Endpoint (MVP KIDNEY DETECTION)
+# ============================================================================
+
+@router.post(
+    "/classify-organ",
+    response_model=ClassificationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Classify organ in ultrasound image",
+    description="Detect what organ is shown in an ultrasound image (MVP: kidney detection)"
+)
+def classify_organ_endpoint(
+    request: ClassificationRequest,
+    db: DBSession = Depends(get_db)
+) -> ClassificationResponse:
+    """
+    Classify what organ is shown in an ultrasound image.
+
+    **This is the MVP FEATURE for kidney detection.**
+
+    **Process:**
+    1. Validates session and image exist
+    2. Gets image file path from storage
+    3. Calls Person B's classification engine (classify_organ)
+    4. Saves classification result to database
+    5. Returns organ detection result to operator
+
+    **Person B Integration:**
+    - Calls: `classify_organ(image_path)`
+    - Receives: `{"detected_organ": str, "confidence": float, "is_kidney": bool, "message": str}`
+    - Validates result matches interface contract
+    - Stores result for historical tracking
+
+    **Response:**
+    - detected_organ: What organ was identified (e.g., "kidney", "liver", "heart", "unknown")
+    - confidence: Classification confidence (0.0 to 1.0)
+    - is_kidney: Boolean flag for MVP kidney detection
+    - message: Human-readable feedback for operator
+
+    **Use case:**
+    Operator uploads an ultrasound image and gets immediate feedback on
+    whether the image shows a kidney.
+
+    **Frontend display:**
+    - If is_kidney=True → Show "Kidney Detected!" with confidence
+    - If is_kidney=False → Show detected organ or "No kidney detected"
+    """
+    # ========================================================================
+    # 1. Validate all required entities exist
+    # ========================================================================
+
+    # Verify session exists
+    session = get_session_or_404(db, request.session_id)
+
+    # Verify image exists and belongs to this session
+    image = get_image_or_404(db, request.image_id)
+    if image.session_id != request.session_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Image {request.image_id} does not belong to session {request.session_id}"
+        )
+
+    # ========================================================================
+    # 2. Get image file path from storage
+    # ========================================================================
+
+    try:
+        image_path = get_image_path(image.storage_path)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Image file not found on disk: {image.storage_path}"
+        )
+
+    # ========================================================================
+    # 3. Call Person B's classification engine
+    # ========================================================================
+
+    start_time = time.time()
+
+    try:
+        # THE BRIDGE TO PERSON B
+        # This calls Person B's classify_organ() function
+        result = classify_organ(str(image_path))
+
+        # Calculate processing time
+        processing_time_ms = int((time.time() - start_time) * 1000)
+
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Image file error: {str(e)}"
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Classification validation error: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Classification engine error: {str(e)}"
+        )
+
+    # ========================================================================
+    # 4. Validate result from Person B matches interface contract
+    # ========================================================================
+
+    try:
+        # This validates that Person B's output matches the expected format
+        validated_result = ClassificationResultFromEngine(**result)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Classification result validation failed: {str(e)}"
+        )
+
+    # ========================================================================
+    # 5. Save classification result to database
+    # ========================================================================
+
+    # Use the factory method from Classification model
+    classification = Classification.from_classification_result(
+        session_id=request.session_id,
+        image_id=request.image_id,
+        result=result,
+        processing_time_ms=processing_time_ms
+    )
+
+    db.add(classification)
+    db.commit()
+    db.refresh(classification)
+
+    # ========================================================================
+    # 6. Return response to operator
+    # ========================================================================
+
+    return ClassificationResponse(
+        id=classification.id,
+        session_id=classification.session_id,
+        image_id=classification.image_id,
+        detected_organ=classification.detected_organ,
+        confidence=classification.confidence,
+        is_kidney=classification.is_kidney,
+        message=classification.message,
+        processing_time_ms=classification.processing_time_ms,
+        created_at=classification.created_at
     )

@@ -135,6 +135,14 @@ class Session(Base):
         doc="All analysis comparisons performed in this session"
     )
 
+    classifications = relationship(
+        "Classification",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="Classification.created_at.desc()",
+        doc="All organ classifications performed in this session"
+    )
+
     # ========================================================================
     # Methods
     # ========================================================================
@@ -160,6 +168,11 @@ class Session(Base):
     def comparison_count(self) -> int:
         """Get the number of comparisons in this session."""
         return len(self.comparisons)
+
+    @property
+    def classification_count(self) -> int:
+        """Get the number of classifications in this session."""
+        return len(self.classifications)
 
     def is_active(self) -> bool:
         """Check if the session is currently active."""

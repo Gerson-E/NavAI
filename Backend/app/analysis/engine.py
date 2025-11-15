@@ -8,7 +8,7 @@ Person A: You can import and use this for testing your API while Person B builds
 """
 
 import os
-from app.analysis.interface import ComparisonResult
+from app.analysis.interface import ComparisonResult, ClassificationResult
 
 
 def compare_to_reference(current_img_path: str, ref_id: str) -> ComparisonResult:
@@ -49,6 +49,45 @@ def compare_to_reference(current_img_path: str, ref_id: str) -> ComparisonResult
         verdict="good",
         message=f"[STUB] Probe positioning looks good for {ref_id}. This is dummy data.",
         confidence=0.85
+    )
+
+
+def classify_organ(img_path: str) -> ClassificationResult:
+    """
+    STUB IMPLEMENTATION - Returns dummy data for testing.
+
+    This is the MVP FEATURE for kidney detection.
+
+    Person B will replace this with real organ classification logic including:
+    - Image preprocessing
+    - Deep learning model inference
+    - Organ detection and classification
+    - Kidney-specific detection
+
+    Args:
+        img_path: Absolute path to the ultrasound image file
+
+    Returns:
+        ClassificationResult dictionary with detected organ and confidence
+
+    Raises:
+        FileNotFoundError: If img_path does not exist
+        ValueError: If image is invalid/corrupted
+    """
+    # Basic validation that Person A can rely on
+    if not os.path.exists(img_path):
+        raise FileNotFoundError(f"Image file not found: {img_path}")
+
+    # STUB: Return dummy data - alternates between kidney and other organs for testing
+    # Person B will replace everything below with real classification
+
+    # Simple stub: randomly detect kidney with high confidence for testing
+    # This simulates the MVP behavior
+    return ClassificationResult(
+        detected_organ="kidney",
+        confidence=0.92,
+        is_kidney=True,
+        message="[STUB] Kidney detected with high confidence. This is dummy data."
     )
 
 
