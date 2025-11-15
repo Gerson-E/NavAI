@@ -45,6 +45,13 @@ from app.schemas.comparison import (
     ComparisonStatistics,
 )
 
+# Classification schemas (MVP KIDNEY DETECTION)
+from app.schemas.classification import (
+    ClassificationRequest,
+    ClassificationResponse,
+    ClassificationResultFromEngine,
+)
+
 
 # Export all schemas
 __all__ = [
@@ -75,4 +82,9 @@ __all__ = [
     "ComparisonListResponse",
     "AnalysisResultFromEngine",
     "ComparisonStatistics",
+
+    # Classification schemas
+    "ClassificationRequest",
+    "ClassificationResponse",
+    "ClassificationResultFromEngine",
 ]

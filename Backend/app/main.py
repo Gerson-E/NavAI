@@ -44,11 +44,12 @@ async def health_check():
 
 
 # Person A: Import and include your API routers here
-# Example:
-# from app.api import sessions, images, reference_views
-# app.include_router(sessions.router, prefix="/api/v1/sessions", tags=["sessions"])
-# app.include_router(images.router, prefix="/api/v1/images", tags=["images"])
-# app.include_router(reference_views.router, prefix="/api/v1/reference-views", tags=["reference-views"])
+from app.api import images, sessions, analysis
+
+# Include routers
+app.include_router(sessions.router, prefix="/api/v1/sessions", tags=["sessions"])
+app.include_router(images.router, prefix="/api/v1", tags=["images"])
+app.include_router(analysis.router, prefix="/api/v1", tags=["analysis"])
 
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ from app.models.session import Session, SessionStatus
 from app.models.image import Image
 from app.models.reference_view import ReferenceView, ReferenceViewCategory
 from app.models.comparison import Comparison, ComparisonVerdict
+from app.models.classification import Classification
 
 # Export all models
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "Image",
     "ReferenceView",
     "Comparison",
+    "Classification",
 
     # Enums
     "SessionStatus",
