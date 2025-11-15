@@ -1,0 +1,16 @@
+# Combined requirements for the entire backend
+# Install with: pip install -r requirements.txt
+
+# Person A - API & Data Layer
+-r requirements-api.txt
+
+# Person B - Image Analysis Engine
+-r requirements-analysis.txt
+
+# Shared development dependencies
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2  # For testing FastAPI
+black==23.12.0
+flake8==6.1.0
+mypy==1.7.1
