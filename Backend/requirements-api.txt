@@ -1,0 +1,10 @@
+# Person A - API & Data Layer Dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+sqlalchemy==2.0.23
+alembic==1.13.0
+python-multipart==0.0.6  # For file uploads
+python-jose[cryptography]==3.3.0  # For future JWT auth
+passlib[bcrypt]==1.7.4  # For future password hashing
