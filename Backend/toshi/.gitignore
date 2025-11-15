@@ -1,1 +1,13 @@
 .venv
+*.pth
+*.zip
+*.tar.gz
+*_cv_mask.png
+*_cv_overlay.png
+extracted_weights/
+analyze_image.py
+download_pretrained.py
+extract_dataset.py
+extract_dataset_simple.py
+setup_training.py
+TRAINING_GUIDE.md
