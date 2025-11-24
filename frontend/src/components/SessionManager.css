@@ -1,0 +1,157 @@
+.session-manager {
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  height: fit-content;
+  position: sticky;
+  top: 2rem;
+}
+
+.session-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.session-manager-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.create-session-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-color);
+  border-radius: var(--radius);
+}
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.session-item {
+  padding: 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface-color);
+}
+
+.session-item:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.session-item.active {
+  border-color: var(--primary-color);
+  background: rgb(37 99 235 / 0.05);
+}
+
+.session-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.session-id {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.session-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.session-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.btn-delete-session {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  font-weight: 300;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.btn-delete-session:hover {
+  background: var(--error-color);
+  color: white;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.btn-delete-session:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.session-item:hover .btn-delete-session {
+  opacity: 0.8;
+}
+
+.status-active {
+  background: rgb(16 185 129 / 0.1);
+  color: var(--success-color);
+}
+
+.status-completed {
+  background: rgb(100 116 139 / 0.1);
+  color: var(--secondary-color);
+}
+
+.status-cancelled {
+  background: rgb(239 68 68 / 0.1);
+  color: var(--error-color);
+}
+
+.session-patient {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.session-stats {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
