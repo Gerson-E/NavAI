@@ -125,9 +125,24 @@ def compare_to_reference(current_img_path: str, ref_id: str) -> ComparisonResult
     if ref_id == "kidney_longitudinal" and HAS_CV_ANALYSIS:
         try:
             gray = load_gray(current_img_path)
+
+            # Validation: Check if image has meaningful content
+            img_std = np.std(gray)
+            img_mean = np.mean(gray)
+
+            # Reject uniform or blank images
+            if img_std < 15 or img_mean > 240 or img_mean < 15:
+                return ComparisonResult(
+                    ssim=0.0,
+                    ncc=0.0,
+                    verdict="poor",
+                    message=f"Image appears to be blank or invalid. Upload a real ultrasound image.",
+                    confidence=0.1
+                )
+
             enhanced = enhance_contrast(gray)
-            mask = find_kidney_mask(enhanced, min_frac=0.01, max_frac=0.65)
-            is_present, fraction = compute_presence(mask, area_threshold=0.01)
+            mask = find_kidney_mask(enhanced, min_frac=0.03, max_frac=0.65)
+            is_present, fraction = compute_presence(mask, area_threshold=0.03)
             
             # Score based on kidney detection quality
             if is_present and 0.05 <= fraction <= 0.30:  # Good kidney size
@@ -193,16 +208,41 @@ def classify_organ(img_path: str) -> ClassificationResult:
         try:
             # Load and preprocess image
             gray = load_gray(img_path)
+
+            # Validation: Check if image has meaningful content (not pure white/black/uniform)
+            img_std = np.std(gray)
+            img_mean = np.mean(gray)
+
+            # Reject images that are too uniform (likely test images, blank screens, etc.)
+            if img_std < 15:  # Very low variation
+                return ClassificationResult(
+                    detected_organ="unknown",
+                    confidence=0.1,
+                    is_kidney=False,
+                    message=f"Image appears to be too uniform (std: {img_std:.1f}). Upload a real ultrasound image."
+                )
+
+            # Reject images that are mostly white or mostly black
+            if img_mean > 240 or img_mean < 15:
+                return ClassificationResult(
+                    detected_organ="unknown",
+                    confidence=0.1,
+                    is_kidney=False,
+                    message=f"Image appears to be blank (mean: {img_mean:.1f}). Upload a real ultrasound image."
+                )
+
             enhanced = enhance_contrast(gray)
-            
+
             # Find kidney mask using classical CV
-            mask = find_kidney_mask(enhanced, min_frac=0.01, max_frac=0.65)
-            
-            # Compute presence
-            is_present, fraction = compute_presence(mask, area_threshold=0.01)
-            
+            # Increased min_frac from 0.01 to 0.03 (3% minimum coverage)
+            mask = find_kidney_mask(enhanced, min_frac=0.03, max_frac=0.65)
+
+            # Compute presence - increased threshold from 1% to 3%
+            is_present, fraction = compute_presence(mask, area_threshold=0.03)
+
             # Determine organ and confidence
-            if is_present and fraction > 0.01:
+            # Increased minimum fraction from 0.01 to 0.03
+            if is_present and fraction > 0.03:
                 # Kidney detected
                 confidence = min(0.95, 0.5 + fraction * 2.0)  # Scale fraction to confidence
                 return ClassificationResult(

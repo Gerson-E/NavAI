@@ -29,7 +29,7 @@ export default function SessionManager({ currentSession, onSessionChange }: Sess
 
   const createSession = async () => {
     if (loading) return;
-    
+
     setLoading(true);
     try {
       const data: SessionCreate = {
@@ -37,11 +37,19 @@ export default function SessionManager({ currentSession, onSessionChange }: Sess
         notes: notes || null,
       };
       const newSession = await api.createSession(data);
+      console.log('Created new session:', newSession.id);
+
+      // Update sessions list
       setSessions([newSession, ...sessions]);
-      onSessionChange(newSession);
+
+      // Clear form
       setShowCreateForm(false);
       setPatientId('');
       setNotes('');
+
+      // Switch to new session (do this last to avoid race conditions)
+      console.log('Switching to new session:', newSession.id);
+      onSessionChange(newSession);
     } catch (error) {
       console.error('Failed to create session:', error);
       alert('Failed to create session. Please try again.');

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api, type Image, type ComparisonResponse, type ClassificationResponse } from '../api/client';
 import './ImageDisplay.css';
 
@@ -9,11 +9,47 @@ interface ImageDisplayProps {
 }
 
 export default function ImageDisplay({ sessionId, image, onAnalysisComplete }: ImageDisplayProps) {
+  // ALL HOOKS MUST BE AT THE TOP - React Rules of Hooks
   const [comparison, setComparison] = useState<ComparisonResponse | null>(null);
   const [classification, setClassification] = useState<ClassificationResponse | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzingType, setAnalyzingType] = useState<'position' | 'organ' | null>(null);
   const [referenceView, setReferenceView] = useState('kidney_longitudinal');
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [imageKey, setImageKey] = useState(Date.now());
+
+  // Reset image loading state when image changes
+  useEffect(() => {
+    setImageLoaded(false);
+    setImageError(false);
+    setImageKey(Date.now()); // Force reload with new timestamp
+  }, [image?.id]);
+
+  // Safety check AFTER all hooks: Only block if image is missing
+  if (!image) {
+    console.log('ImageDisplay: No image provided, showing placeholder');
+    return (
+      <div className="image-display">
+        <div className="no-selection" style={{
+          minHeight: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg-color)',
+          borderRadius: 'var(--radius-lg)',
+          color: 'var(--text-secondary)'
+        }}>
+          <p>Loading session images...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Warn if session mismatch but still render (less strict)
+  if (image.session_id !== sessionId) {
+    console.warn(`Session mismatch: Image ${image.id} belongs to session ${image.session_id}, but current session is ${sessionId}. Rendering anyway.`);
+  }
 
   const analyzePosition = async () => {
     setAnalyzing(true);
@@ -96,18 +132,71 @@ export default function ImageDisplay({ sessionId, image, onAnalysisComplete }: I
     }
   };
 
-  const imageUrl = api.getImageUrl(image.id);
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    console.error('Failed to load image:', image.id);
+    setImageError(true);
+    setImageLoaded(true);
+
+    // Retry after a short delay
+    setTimeout(() => {
+      setImageKey(Date.now());
+      setImageError(false);
+      setImageLoaded(false);
+    }, 1000);
+  };
+
+  // Add cache-busting timestamp to ensure fresh image load
+  const imageUrl = `${api.getImageUrl(image.id)}?t=${imageKey}`;
 
   return (
     <div className="image-display">
       <div className="image-container">
-        <img src={imageUrl} alt={image.filename} className="uploaded-image" />
-        <div className="image-info">
-          <p className="image-filename">{image.filename}</p>
-          {image.dimensions && (
-            <p className="image-meta">{image.dimensions} • {image.file_size_formatted}</p>
-          )}
-        </div>
+        {!imageLoaded && !imageError && (
+          <div className="image-loading" style={{
+            minHeight: '300px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-secondary)'
+          }}>
+            <div>
+              <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
+              <p>Loading image...</p>
+            </div>
+          </div>
+        )}
+        {imageError && (
+          <div className="image-error" style={{
+            minHeight: '300px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--error-color)'
+          }}>
+            <p>Retrying image load...</p>
+          </div>
+        )}
+        <img
+          src={imageUrl}
+          alt={image.filename}
+          className="uploaded-image"
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          style={{ display: imageLoaded && !imageError ? 'block' : 'none' }}
+        />
+        {imageLoaded && !imageError && (
+          <div className="image-info">
+            <p className="image-filename">{image.filename}</p>
+            {image.dimensions && (
+              <p className="image-meta">{image.dimensions} • {image.file_size_formatted}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="analysis-controls">
